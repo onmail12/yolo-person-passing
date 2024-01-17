@@ -5,7 +5,7 @@ import torch
 
 torch.cuda.set_device(0)
 
-cap = cv2.VideoCapture("enter video source")
+cap = cv2.VideoCapture(0)
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 cap.set(3, frame_width)
@@ -49,8 +49,6 @@ while True:
     )
     line_counter.trigger(detections)
     line_counter_ann.annotate(frame, line_counter)
-    print(line_counter.in_count)
-    print(line_counter.out_count)
 
     cv2.imshow("webcam", frame)
     if cv2.waitKey(1) == ord("q"):

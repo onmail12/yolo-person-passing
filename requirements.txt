@@ -1,0 +1,4 @@
+opencv_python==4.8.1.78
+supervision==0.17.1
+torch==2.1.2
+ultralytics==8.1.2

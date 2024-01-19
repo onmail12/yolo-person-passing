@@ -11,7 +11,7 @@ frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 cap.set(3, frame_width)
 cap.set(4, frame_height)
 
-model = YOLO("models/yolov8m.pt")
+model = YOLO("yolov8m.pt")
 bounding_box_annotator = sv.BoundingBoxAnnotator()
 label_annotator = sv.LabelAnnotator()
 tracker = sv.ByteTrack()
@@ -27,32 +27,37 @@ LINE_END = sv.Point(int(frame_width / 2), frame_height)
 line_counter = sv.LineZone(LINE_START, LINE_END)
 line_counter_ann = sv.LineZoneAnnotator()
 
+frame_counter = 0
+skip_frames = 2
+
 while True:
     _, frame = cap.read()
     results = model(frame, conf=0.5, stream=True, verbose=False)
     results = list(results)[0]
 
-    detections = sv.Detections.from_ultralytics(results)
-    detections = detections[detections.class_id == 0]
-    detections = tracker.update_with_detections(detections)
+    frame_counter += 1
+    if frame_counter % skip_frames == 0:
+        detections = sv.Detections.from_ultralytics(results)
+        detections = detections[detections.class_id == 0]
+        detections = tracker.update_with_detections(detections)
 
-    labels = [
-        f"#{tracker_id} {results.names[class_id]}"
-        for class_id, tracker_id in zip(detections.class_id, detections.tracker_id)
-    ]
+        labels = [
+            f"#{tracker_id} {results.names[class_id]}"
+            for class_id, tracker_id in zip(detections.class_id, detections.tracker_id)
+        ]
 
-    annotated_image = bounding_box_annotator.annotate(
-        scene=frame, detections=detections
-    )
-    annotated_image = label_annotator.annotate(
-        scene=annotated_image, detections=detections, labels=labels
-    )
-    line_counter.trigger(detections)
-    line_counter_ann.annotate(frame, line_counter)
+        annotated_image = bounding_box_annotator.annotate(
+            scene=frame, detections=detections
+        )
+        annotated_image = label_annotator.annotate(
+            scene=annotated_image, detections=detections, labels=labels
+        )
+        line_counter.trigger(detections)
+        line_counter_ann.annotate(frame, line_counter)
 
-    cv2.imshow("webcam", frame)
-    if cv2.waitKey(1) == ord("q"):
-        break
+        cv2.imshow("webcam", frame)
+        if cv2.waitKey(1) == ord("q"):
+            break
 
 cap.release()
 cv2.destroyAllWindows()
